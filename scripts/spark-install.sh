@@ -133,6 +133,7 @@ _init(){
 	#replace default config of spark in cluster
 	cp -r /spark-config/0 /etc/spark2/$HDP_VERSION/
 	#cp -r /etc/hive/$HDP_VERSION/0/hive-site.xml /etc/spark2/$HDP_VERSION/0/
+	rm -rf /usr/hdp/$HDP_VERSION/livy/conf
 	cp -r /spark-config/conf /usr/hdp/$HDP_VERSION/livy/
 
 	echo "[$(_timestamp)]: replace environment file"
