@@ -203,7 +203,7 @@ _init(){
 		cd /usr/hdp/current/spark2-client/
 		rm -rf work
 		echo "[$(_timestamp)]: starting slaves"
-		eval ./sbin/start-slaves.sh
+		eval su -u spark ./sbin/start-slaves.sh
 	fi	 
 	
 }
