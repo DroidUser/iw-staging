@@ -190,29 +190,21 @@ _init(){
 		echo "[$(_timestamp)]: starting history server"
 		eval sudo -u spark ./sbin/start-history-server.sh
 		echo "[$(_timestamp)]: starting thrift server"
-		#eval sudo -u hive ./sbin/start-thriftserver.sh --master yarn
+		eval sudo -u hive ./sbin/start-thriftserver.sh
 		echo "[$(_timestamp)]: starting livy server"
 		cd /usr/hdp/current/livy-server/
 		eval sudo -u livy ./bin/livy-server &
 	elif [ $long_hostname == $secondary_namenode_hostname ]; then
 		cd /usr/hdp/current/spark2-client
 		echo "[$(_timestamp)]: starting thrift server"
-		#eval sudo -u hive ./sbin/start-thriftserver.sh --master yarn
+		eval sudo -u hive ./sbin/start-thriftserver.sh
 	else
 		cd /usr/hdp/current/spark2-client/
 		rm -rf work
 		echo "[$(_timestamp)]: starting slaves"
-		eval ./sbin/start-slave.sh spark://${active_namenode_hostname}:7077
+		eval ./sbin/start-slaves.sh
 	fi	 
 	
-	echo "[$(_timestamp)]: writing metadata file"
-	#Create file with hostnames
-	host_metadata="metadata.txt"
-	echo "HDI version : "$HDP_VERSION >> $host_metadata
-	echo "active namenode : "$active_namenode_hostname >> $host_metadata
-	echo "standby namenode : "$secondary_namenode_hostname >> $host_metadata
-
-	touch $host_metadata
 }
 
 cluster_name=""
