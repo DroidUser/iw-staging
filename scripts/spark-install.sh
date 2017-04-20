@@ -182,23 +182,26 @@ _init(){
 	rm -rf /sparkconf.tar.gz
 	rm -rf livy-server-0.3.0.zip
 	rm -rf livy
+	chown -R root: /etc/spark2/$HDP_VERSION/0/
+	chown -R spark: /etc/spark2/$HDP_VERSION/0/*
+	chown -R hive: /etc/spark2/$HDP_VERSION/0/spark-thrift-sparkconf.conf
 	#start the demons based on host
 	if [ $long_hostname == $active_namenode_hostname ]; then
 		echo "[$(_timestamp)]: in active namenode"
 	 	cd /usr/hdp/current/spark2-client
 		echo "[$(_timestamp)]: starting spark master"
-		eval sudo -u spark ./sbin/start-master.sh
+		#eval sudo -u spark ./sbin/start-master.sh
 		echo "[$(_timestamp)]: starting history server"
 		eval sudo -u spark ./sbin/start-history-server.sh
 		echo "[$(_timestamp)]: starting thrift server"
-		#eval sudo -u hive ./sbin/start-thriftserver.sh
+		eval sudo -u hive ./sbin/start-thriftserver.sh --master yarn --conf spark.ui.port=5040
 		echo "[$(_timestamp)]: starting livy server"
 		cd /usr/hdp/current/livy-server/
 		eval sudo -u livy ./bin/livy-server &
 	elif [ $long_hostname == $secondary_namenode_hostname ]; then
 		cd /usr/hdp/current/spark2-client
 		echo "[$(_timestamp)]: starting thrift server"
-		#eval sudo -u hive ./sbin/start-thriftserver.sh
+		eval sudo -u hive ./sbin/start-thriftserver.sh --master yarn --conf spark.ui.port=5040
 	else
 		cd /usr/hdp/current/spark2-client/
 		rm -rf work
