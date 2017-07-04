@@ -66,21 +66,21 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
-      "defaultValue": "https://iwteststorage.blob.core.windows.net"
+      "defaultValue": "https://raw.githubusercontent.com/DroidUser/iw-staging/master/iw-data-warehouse"
     },
     "publicBlob": {
       "type": "string",
       "metadata": {
         "description": "A script action you can run on the node to install or configure additiona software."
       },
-      "defaultValue": "utility-infoworks"
+      "defaultValue": "utility"
     },
     "privateBlob": {
       "type": "string",
       "metadata": {
         "description": "A script action you can run on the node to install or configure additiona software."
       },
-      "defaultValue": "action-scripts-infoworks"
+      "defaultValue": "scripts"
     },
     "clusterNodeCount": {
       "type": "string",
@@ -150,7 +150,7 @@
     }
   },
   "variables": {
-    "accessKeyUrl": "[uri(deployment().properties.templateLink.uri , 'iw-key.txt')]",
+    "accessKeyUrl": "",
     "mainScriptFile": "[string('iw-install.sh')]",
     "publicBlobUrl":"[concat(parameters('artifactsLocation'), '/', parameters('publicBlob'), '/')]",
     "privateBlobUrl":"[concat(parameters('artifactsLocation'), '/', parameters('privateBlob'), '/')]",
