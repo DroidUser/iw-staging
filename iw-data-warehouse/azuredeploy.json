@@ -287,7 +287,7 @@
               "scriptActions": [
                 {
                   "name": "iw_installer_hn1",
-                  "uri": "[concat(variables('publicBlobUrl'), '/', variables('mainScriptFile'))]",
+                  "uri": "[concat(variables('publicBlobUrl'), variables('mainScriptFile'))]",
                   "parameters": "[variables('scriptParameters')]"
                 }
               ]
@@ -306,7 +306,7 @@
               "scriptActions": [
                 {
                   "name": "iw_installer_wn1",
-                  "uri": "[concat(variables('publicBlobUrl'), '/', variables('mainScriptFile'))]",
+                  "uri": "[concat(variables('publicBlobUrl'), variables('mainScriptFile'))]",
                   "parameters": "[variables('scriptParameters')]"
                 }
               ]
@@ -350,7 +350,7 @@
         "installScriptActions": [
           {
             "name": "[concat('emptynode','-' ,uniquestring(variables('applicationName')))]",
-            "uri": "[concat(variables('publicBlobUrl'), '/', variables('mainScriptFile'))]",
+            "uri": "[concat(variables('publicBlobUrl'), variables('mainScriptFile'))]",
             "roles": [
               "edgenode"
             ],
