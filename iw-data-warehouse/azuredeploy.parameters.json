@@ -9,13 +9,13 @@
             "value": "admin"
         },
         "clusterLoginPassword": {
-            "value": "Cluster@2017$"
+            "value": "changeme"
         },
         "sshUserName": {
             "value": "sshuser"
         },
         "sshPassword": {
-            "value": "Cluster@2017$"
+            "value": "changeme"
         },
         "timeZone": {
             "value": "EST"
