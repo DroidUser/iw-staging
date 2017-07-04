@@ -1,0 +1,418 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "clusterName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the HDInsight cluster to be created. The cluster name must be globally unique."
+      }
+    },
+    "clusterLoginUserName": {
+      "type": "string",
+      "defaultValue": "admin",
+      "metadata": {
+        "description": "These credentials can be used to submit jobs to the cluster and to log into cluster dashboards."
+      }
+    },
+    "clusterLoginPassword": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The password must be at least 8 characters in length and must contain at least one digit, one non-alphanumeric character, one upper case letter and one lower case letter. Also, the password should not contain 3 consecutive letters from the username"
+      }
+    },
+    "sshUserName": {
+      "type": "string",
+      "defaultValue": "sshuser",
+      "metadata": {
+        "description": "These credentials can be used to remotely access the cluster."
+      }
+    },
+    "sshPassword": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The password must be at least 10 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "defaultValue": "password",
+      "allowedValues": [
+        "password",
+        "sshPublicKey"
+      ],
+      "metadata": {
+        "description": "Choose a password or ssh public key for the Admin username used to access virtual machines"
+      }
+    },
+    "sshKey": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "SSH rsa public key file as a string."
+      }
+    },
+    "timeZone": {
+      "type": "string",
+      "defaultValue": "EST",
+      "metadata": {
+        "description": "Time Zone of Data Sources"
+      }
+    },
+    "artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://iwteststorage.blob.core.windows.net"
+    },
+    "publicBlob": {
+      "type": "string",
+      "metadata": {
+        "description": "A script action you can run on the node to install or configure additiona software."
+      },
+      "defaultValue": "utility-infoworks"
+    },
+    "privateBlob": {
+      "type": "string",
+      "metadata": {
+        "description": "A script action you can run on the node to install or configure additiona software."
+      },
+      "defaultValue": "action-scripts-infoworks"
+    },
+    "clusterNodeCount": {
+      "type": "string",
+      "defaultValue": "3",
+      "metadata": {
+        "description": "Number of VM to create"
+      }
+    },
+    "workerNodeVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D4_v2",
+      "metadata": {
+        "description": "Size of the VM"
+      }
+    },
+    "headNodeVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D13_v2",
+      "metadata": {
+        "description": "Size of the VM"
+      }
+    },
+    "zookeeperVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_A3",
+      "metadata": {
+        "description": "Size of the VM"
+      }
+    },
+    "edgenodeVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D13_v2",
+      "metadata": {
+        "description": "Size of the VM"
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of storage account"
+      }
+    },
+    "storageAccountNewOrExisting": {
+      "type": "string",
+      "defaultValue": "new",
+      "allowedValues": [
+        "new",
+        "existing"
+      ],
+      "metadata": {
+        "Description": "Indicates whether the Storage Account is new or existing"
+      }
+    },
+    "storageAccountType": {
+      "type": "string",
+      "metadata": {
+        "description": "The type of the Storage Account created"
+      },
+      "defaultValue": "Standard_LRS"
+    },
+    "existingStorageAccountRG": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource Group of the Existing VM."
+      },
+      "defaultValue": ""
+    }
+  },
+  "variables": {
+    "accessKeyUrl": "[uri(deployment().properties.templateLink.uri , 'iw-key.txt')]",
+    "mainScriptFile": "[string('iw-install.sh')]",
+    "publicBlobUrl":"[concat(parameters('artifactsLocation'), '/', parameters('publicBlob'), '/')]",
+    "privateBlobUrl":"[concat(parameters('artifactsLocation'), '/', parameters('privateBlob'), '/')]",
+    "scriptParameters": "[concat(parameters('clusterName'),' ',parameters('clusterLoginUserName'),' ',parameters('clusterLoginPassword'),' ',parameters('timeZone'),' ',parameters('sshPassword'),' ',variables('accessKeyUrl'),' ',variables('publicBlobUrl'),' ',variables('privateBlobUrl'))]",
+    "clusterStorageAccountName": "[parameters('storageAccountName')]",
+    "storageNameAppender": "[concat(parameters('storageAccountName'),'j4',parameters('storageAccountNewOrExisting'))]",
+    "storageDecider_new": "[replace(variables('storageNameAppender'),'j4new','')]",
+    "storageDecider_existing": "[replace(variables('storageNameAppender'),'j4existing','')]",
+    "storageAccountType": "Standard_LRS",
+    "applicationName": "Infoworks-Cloud-Data-Warehouse",
+    "password_osProfile": {
+      "linuxOperatingSystemProfile": {
+        "username": "[parameters('sshUserName')]",
+        "password": "[parameters('sshPassword')]"
+      }
+    },
+    "sshPublicKey_osProfile": {
+      "linuxOperatingSystemProfile": {
+        "username": "[parameters('sshUserName')]",
+        "sshProfile": {
+          "publicKeys": [
+            {
+              "certificateData": "[parameters('sshKey')]"
+            }
+          ]
+        }
+      }
+    },
+    "osProfile": "[variables(concat(parameters('authenticationType'), '_osProfile'))]",
+    "vNet": {
+      "name": "[concat(parameters('clusterName'),'-vnet')]",
+      "addressSpacePrefix": "10.0.0.0/16",
+      "subnetName": "subnet1",
+      "subnetPrefix": "10.0.0.0/24",
+      "id": "[resourceId('Microsoft.Network/virtualNetworks', concat(parameters('clusterName'),'-vnet'))]",
+      "subnet": "[concat(resourceId('Microsoft.Network/virtualNetworks', concat(parameters('clusterName'),'-vnet')), '/subnets/subnet1')]"
+    },
+    "storageProfile_existing": "[resourceId(parameters('existingStorageAccountRG'), 'Microsoft.Storage/storageAccounts', variables('storageDecider_existing'))]",
+    "storageProfile_new": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageDecider_new'))]",
+    "storageProfile": "[variables(concat('storageProfile_',parameters('storageAccountNewOrExisting')))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('vNet').name]",
+      "apiVersion": "2016-03-30",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('vNet').addressSpacePrefix]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('vNet').subnetName]",
+            "properties": {
+              "addressPrefix": "[variables('vNet').subnetPrefix]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('storageDecider_new')]",
+      "apiVersion": "2016-01-01",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "[variables('storageAccountType')]"
+      },
+      "kind": "Storage",
+      "properties": {}
+    },
+    {
+      "name": "[parameters('clusterName')]",
+      "type": "Microsoft.HDInsight/clusters",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-03-01-preview",
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/',variables('vNet').name)]"
+      ],
+      "tags": {},
+      "properties": {
+        "clusterVersion": "3.5",
+        "osType": "Linux",
+        "clusterDefinition": {
+          "kind": "hbase",
+          "configurations": {
+            "gateway": {
+              "restAuthCredential.isEnabled": true,
+              "restAuthCredential.username": "[parameters('clusterLoginUserName')]",
+              "restAuthCredential.password": "[parameters('clusterLoginPassword')]"
+            },
+            "hive-site": {
+              "hive.server2.transport.mode": "binary"
+            },
+            "yarn-site": {
+              "yarn.timeline-service.entity-group-fs-store.group-id-plugin-classpath": "/usr/hdp/current/spark-client/hdpLib/*",
+              "yarn.timeline-service.entity-group-fs-store.group-id-plugin-classes": "org.apache.spark.deploy.history.yarn.plugin.SparkATSPlugin"
+            },
+            "capacity-scheduler": {
+              "yarn.scheduler.capacity.root.default.capacity": "50",
+              "yarn.scheduler.capacity.root.queues": "default,thriftsvr",
+              "yarn.scheduler.capacity.root.thriftsvr.capacity": "50",
+              "yarn.scheduler.capacity.root.thriftsvr.maximum-capacity": "100",
+              "yarn.scheduler.capacity.root.thriftsvr.user-limit-factor": "10"
+            }
+          }
+        },
+        "storageProfile": {
+          "storageaccounts": [
+            {
+              "name": "[replace(replace(reference(variables('storageProfile'), '2016-01-01').primaryEndpoints.blob,'https://',''),'/','')]",
+              "isDefault": true,
+              "container": "[parameters('clusterName')]",
+              "key": "[listKeys(variables('storageProfile'), '2016-01-01').keys[0].value]"
+            }
+          ]
+        },
+        "computeProfile": {
+          "roles": [
+            {
+              "name": "headnode",
+              "targetInstanceCount": "2",
+              "hardwareProfile": {
+                "vmSize": "[parameters('headNodeVmSize')]"
+              },
+              "osProfile": "[variables('osProfile')]",
+              "virtualNetworkProfile": {
+                "id": "[variables('vNet').id]",
+                "subnet": "[variables('vNet').subnet]"
+              },
+              "scriptActions": [
+                {
+                  "name": "iw_installer_hn1",
+                  "uri": "[concat(variables('publicBlobUrl'), '/', variables('mainScriptFile'))]",
+                  "parameters": "[variables('scriptParameters')]"
+                }
+              ]
+            },
+            {
+              "name": "workernode",
+              "targetInstanceCount": "[parameters('clusterNodeCount')]",
+              "hardwareProfile": {
+                "vmSize": "[parameters('workerNodeVmSize')]"
+              },
+              "osProfile": "[variables('osProfile')]",
+              "virtualNetworkProfile": {
+                "id": "[variables('vNet').id]",
+                "subnet": "[variables('vNet').subnet]"
+              },
+              "scriptActions": [
+                {
+                  "name": "iw_installer_wn1",
+                  "uri": "[concat(variables('publicBlobUrl'), '/', variables('mainScriptFile'))]",
+                  "parameters": "[variables('scriptParameters')]"
+                }
+              ]
+            },
+            {
+              "name": "zookeepernode",
+              "targetInstanceCount": "3",
+              "hardwareProfile": {
+                "vmSize": "[parameters('zookeeperVmSize')]"
+              },
+              "osProfile": "[variables('osProfile')]",
+              "virtualNetworkProfile": {
+                "id": "[variables('vNet').id]",
+                "subnet": "[variables('vNet').subnet]"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "[concat(parameters('clusterName'),'/', variables('applicationName'))]",
+      "type": "Microsoft.HDInsight/clusters/applications",
+      "apiVersion": "2015-03-01-preview",
+      "dependsOn": [
+        "[concat('Microsoft.HDInsight/clusters/',parameters('clusterName'))]"
+      ],
+      "properties": {
+        "marketPlaceIdentifier": "EmptyNode",
+        "computeProfile": {
+          "roles": [
+            {
+              "name": "edgenode",
+              "targetInstanceCount": 1,
+              "hardwareProfile": {
+                "vmSize": "[parameters('edgenodeVmSize')]"
+              }
+            }
+          ]
+        },
+        "installScriptActions": [
+          {
+            "name": "[concat('emptynode','-' ,uniquestring(variables('applicationName')))]",
+            "uri": "[concat(variables('publicBlobUrl'), '/', variables('mainScriptFile'))]",
+            "roles": [
+              "edgenode"
+            ],
+            "parameters": "[variables('scriptParameters')]"
+          }
+        ],
+        "uninstallScriptActions": [],
+        "httpsEndpoints": [
+          {
+            "subDomainSuffix": "cdw",
+            "destinationRole": "edgenode",
+            "destinationPort": 3000,
+            "description": "Access to infoworks",
+            "hasWebpage": true,
+            "disableGatewayAuth": true,
+            "accessModes": [
+              "WebPage"
+            ]
+          },
+          {
+            "subDomainSuffix": "api",
+            "destinationRole": "edgenode",
+            "destinationPort": 2999,
+            "description": "Access to infoworks REST API",
+            "hasWebpage": true,
+            "disableGatewayAuth": true,
+            "accessModes": [
+              "WebPage"
+            ]
+          },
+          {
+            "subDomainSuffix": "cub",
+            "destinationRole": "edgenode",
+            "destinationPort": 7005,
+            "description": "Access to infoworks access server for cube",
+            "hasWebpage": true,
+            "disableGatewayAuth": true,
+            "accessModes": [
+              "WebPage"
+            ]
+          }
+        ],
+        "applicationType": "CustomApplication"
+      }
+    }
+  ],
+  "outputs": {
+    "vnet": {
+      "type": "object",
+      "value": "[reference(resourceId('Microsoft.Network/virtualNetworks',variables('vNet').name))]"
+    },
+    "storage": {
+      "type": "object",
+      "value": "[reference(variables('storageProfile'),'2016-01-01')]"
+    },
+    "cluster": {
+      "type": "object",
+      "value": "[reference(resourceId('Microsoft.HDInsight/clusters',parameters('clusterName')))]"
+    },
+    "application": {
+      "type": "object",
+      "value": "[reference(resourceId('Microsoft.HDInsight/clusters/applications/',parameters('clusterName'), variables('applicationName')))]"
+    }
+  }
+}
