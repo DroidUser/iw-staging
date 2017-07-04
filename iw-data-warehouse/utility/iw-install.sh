@@ -45,10 +45,13 @@ _test_is_edgenode()
 _init(){
 
 	#download secret file
-	_download_file $p6 /tmp/${iwSecretFile}
+	#_download_file $p6 /tmp/${iwSecretFile}
 
 	#extract key
-	value=$(</tmp/${iwSecretFile})
+	#value=$(</tmp/${iwSecretFile})
+	
+	#temp-fix
+	value = ""
 
 	#download script file using key
 	_download_file ${p8}${edgeNodeSetup}${value} '/tmp/'${edgeNodeSetup}
