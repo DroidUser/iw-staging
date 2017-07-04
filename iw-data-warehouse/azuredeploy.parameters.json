@@ -1,0 +1,42 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "clusterName": {
+            "value": "iwtest"
+        },
+        "clusterLoginUserName": {
+            "value": "admin"
+        },
+        "clusterLoginPassword": {
+            "value": "Cluster@2017$"
+        },
+        "sshUserName": {
+            "value": "sshuser"
+        },
+        "sshPassword": {
+            "value": "Cluster@2017$"
+        },
+        "timeZone": {
+            "value": "EST"
+        },
+        "clusterNodeCount": {
+            "value": "3"
+        },
+        "workerNodeVmSize": {
+            "value": "Standard_D4_v2"
+        },
+        "headNodeVmSize": {
+            "value": "Standard_D13_v2"
+        },
+        "zookeeperVmSize": {
+            "value": "Standard_A3"
+        },
+        "edgenodeVmSize": {
+            "value": "Standard_D13_v2"
+        },
+	"storageAccountName": {
+	    "value": "[concat(parameters('clusterName'),'store')]"	
+	}
+    }
+}

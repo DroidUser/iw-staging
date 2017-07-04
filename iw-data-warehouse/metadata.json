@@ -1,0 +1,7 @@
+{
+"itemDisplayName": "Cloud Data Warehouse",
+"description": "This template creates a HDinsight cluster with the specified configuration and installs infoworks product on the edgenode.",
+"summary": "Create a hbase cluster with infoworks product",
+"githubUsername": "somebody",
+"dateUpdated": "2017-7-4"
+}
