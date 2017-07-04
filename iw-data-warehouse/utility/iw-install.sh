@@ -51,7 +51,7 @@ _init(){
 	#value=$(</tmp/${iwSecretFile})
 	
 	#temp-fix
-	value = ""
+	value=""
 
 	#download script file using key
 	_download_file ${p8}${edgeNodeSetup}${value} '/tmp/'${edgeNodeSetup}
